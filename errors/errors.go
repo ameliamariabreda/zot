@@ -58,5 +58,7 @@ var (
 	ErrBadType                 = errors.New("core: invalid type")
 	ErrParsingHTTPHeader       = errors.New("routes: invalid HTTP header")
 	ErrBadRange                = errors.New("storage: bad range")
-	ErrBadLayerCount           = errors.New("manifest: layers count doesn't correspond to config history")
+	ErrManifestMetaNotFound    = errors.New("repodb: image metadata not found for given manifest digest")
+	ErrRepoMetaNotFound        = errors.New("repodb: repo metadata not found for given repo name")
+	ErrTypeAssertionFailed     = errors.New("storage: failed DatabaseDriver type assertion")
 )

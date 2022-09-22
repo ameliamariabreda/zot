@@ -17,7 +17,7 @@ import (
 	"zotregistry.io/zot/pkg/storage"
 )
 
-type OciLayoutUtils interface { //nolint: interfacebloat
+type OciLayoutUtils interface {
 	GetImageManifest(repo string, reference string) (ispec.Manifest, string, error)
 	GetImageManifests(image string) ([]ispec.Descriptor, error)
 	GetImageBlobManifest(imageDir string, digest godigest.Digest) (v1.Manifest, error)
@@ -43,7 +43,7 @@ func NewBaseOciLayoutUtils(storeController storage.StoreController, log log.Logg
 	return &BaseOciLayoutUtils{Log: log, StoreController: storeController}
 }
 
-func (olu BaseOciLayoutUtils) GetImageManifest(repo string, reference string) (ispec.Manifest, string, error) {
+func (olu BaseOciLayoutUtils) GetImageManifest(repo string, reference string) (ispec.Manifest, string, string, error) {
 	imageStore := olu.StoreController.GetImageStore(repo)
 
 	if reference == "" {
@@ -52,17 +52,17 @@ func (olu BaseOciLayoutUtils) GetImageManifest(repo string, reference string) (i
 
 	buf, dig, _, err := imageStore.GetImageManifest(repo, reference)
 	if err != nil {
-		return ispec.Manifest{}, "", err
+		return ispec.Manifest{}, "", "", err
 	}
 
 	var manifest ispec.Manifest
 
 	err = json.Unmarshal(buf, &manifest)
 	if err != nil {
-		return ispec.Manifest{}, "", err
+		return ispec.Manifest{}, "", "", err
 	}
 
-	return manifest, dig, nil
+	return manifest, dig, dig, nil
 }
 
 // Provide a list of repositories from all the available image stores.

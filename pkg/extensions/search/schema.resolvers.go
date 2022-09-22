@@ -89,7 +89,8 @@ func (r *queryResolver) ImageListForCve(ctx context.Context, id string) ([]*gql_
 			}
 
 			isSigned := olu.CheckManifestSignature(repo, imageByCVE.Digest)
-			imageInfo := BuildImageInfo(repo, imageByCVE.Tag, imageByCVE.Digest, imageByCVE.Manifest, imageConfig, isSigned)
+			imageInfo := BuildImageInfo(repo, imageByCVE.Tag, imageByCVE.Digest,
+				imageByCVE.Manifest, imageConfig, isSigned)
 
 			affectedImages = append(
 				affectedImages,
@@ -130,7 +131,6 @@ func (r *queryResolver) ImageListWithCVEFixed(ctx context.Context, id string, im
 
 		isSigned := olu.CheckManifestSignature(image, digest)
 		imageInfo := BuildImageInfo(image, tag.Name, digest, manifest, imageConfig, isSigned)
-
 		unaffectedImages = append(unaffectedImages, imageInfo)
 	}
 
@@ -390,7 +390,7 @@ func (r *queryResolver) DerivedImageList(ctx context.Context, image string) ([]*
 
 	imageDir, imageTag := common.GetImageDirAndTag(image)
 
-	imageManifest, _, err := layoutUtils.GetImageManifest(imageDir, imageTag)
+	imageManifest, _, _, err := layoutUtils.GetImageManifest(imageDir, imageTag)
 	if err != nil {
 		r.log.Info().Str("image", image).Msg("image not found")
 
@@ -458,7 +458,7 @@ func (r *queryResolver) BaseImageList(ctx context.Context, image string) ([]*gql
 
 	imageDir, imageTag := common.GetImageDirAndTag(image)
 
-	imageManifest, _, err := layoutUtils.GetImageManifest(imageDir, imageTag)
+	imageManifest, _, _, err := layoutUtils.GetImageManifest(imageDir, imageTag)
 	if err != nil {
 		r.log.Info().Str("image", image).Msg("image not found")
 
@@ -518,18 +518,28 @@ func (r *queryResolver) BaseImageList(ctx context.Context, image string) ([]*gql
 
 // Image is the resolver for the Image field.
 func (r *queryResolver) Image(ctx context.Context, image string) (*gql_generated.ImageSummary, error) {
-	repo, tag := common.GetImageDirAndTag(image)
 	layoutUtils := common.NewBaseOciLayoutUtils(r.storeController, r.log)
+	repo, tag := common.GetImageDirAndTag(image)
+	_, dig, errMani := layoutUtils.GetImageManifest(repo, tag)
 
-	digest, manifest, imageConfig, err := extractImageDetails(ctx, layoutUtils, repo, tag, r.log)
+	if errMani != nil {
+		return nil, errMani
+	}
+
+	digest := godigest.Digest(dig)
+
+	manifest, err := layoutUtils.GetImageBlobManifest(repo, digest)
 	if err != nil {
-		r.log.Error().Err(err).Msg("unable to get image details")
+		return &gql_generated.ImageSummary{}, err
+	}
 
-		return nil, err
+	imageConfig, err := layoutUtils.GetImageConfigInfo(repo, digest)
+	if err != nil {
+		return &gql_generated.ImageSummary{}, err
 	}
 
 	isSigned := layoutUtils.CheckManifestSignature(repo, digest)
-	result := BuildImageInfo(repo, tag, digest, *manifest, *imageConfig, isSigned)
+	result := BuildImageInfo(repo, tag, digest, manifest, imageConfig, isSigned)
 
 	return result, nil
 }

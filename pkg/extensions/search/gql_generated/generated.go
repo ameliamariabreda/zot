@@ -134,6 +134,7 @@ type ComplexityRoot struct {
 		DerivedImageList        func(childComplexity int, image string) int
 		ExpandedRepoInfo        func(childComplexity int, repo string) int
 		GlobalSearch            func(childComplexity int, query string, filter *Filter, requestedPage *PageInput) int
+		Image                   func(childComplexity int, image string) int
 		ImageList               func(childComplexity int, repo string) int
 		ImageListForCve         func(childComplexity int, id string) int
 		ImageListForDigest      func(childComplexity int, id string) int
@@ -614,6 +615,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GlobalSearch(childComplexity, args["query"].(string), args["filter"].(*Filter), args["requestedPage"].(*PageInput)), true
 
+	case "Query.Image":
+		if e.complexity.Query.Image == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Image_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Image(childComplexity, args["image"].(string)), true
+
 	case "Query.ImageList":
 		if e.complexity.Query.ImageList == nil {
 			break
@@ -1031,6 +1044,7 @@ type Query {
     List of images on which the argument image depends on
     """
     BaseImageList(image: String!): [ImageSummary!]
+    Image(image: String!): ImageSummary
 }
 `, BuiltIn: false},
 }

@@ -214,5 +214,6 @@ type Query {
     List of images on which the argument image depends on
     """
     BaseImageList(image: String!): [ImageSummary!]
+    Image(image: String!): ImageSummary
 }
 

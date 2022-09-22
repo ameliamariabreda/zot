@@ -791,7 +791,7 @@ func (r *queryResolver) getImageList(store storage.ImageStore, imageName string)
 }
 
 func BuildImageInfo(repo string, tag string, manifestDigest godigest.Digest,
-	manifest v1.Manifest, imageConfig ispec.Image, isSigned bool,
+	manifest v1.Manifest, imageConfig ispec.Image, isSigned bool, isSigned bool,
 ) *gql_generated.ImageSummary {
 	layers := []*gql_generated.LayerSummary{}
 	size := int64(0)
@@ -799,7 +799,12 @@ func BuildImageInfo(repo string, tag string, manifestDigest godigest.Digest,
 	allHistory := []*gql_generated.LayerHistory{}
 	formattedManifestDigest := manifestDigest.Hex()
 	annotations := common.GetAnnotations(manifest.Annotations, imageConfig.Config.Labels)
-	lastUpdated := common.GetImageLastUpdated(imageConfig)
+
+	lastUpdated := imageConfig.Created
+
+	if lastUpdated == nil && len(imageConfig.History) > 0 {
+		lastUpdated = imageConfig.History[len(imageConfig.History)-1].Created
+	}
 
 	history := imageConfig.History
 	if len(history) == 0 {
@@ -841,7 +846,7 @@ func BuildImageInfo(repo string, tag string, manifestDigest godigest.Digest,
 			Licenses:      &annotations.Licenses,
 			Labels:        &annotations.Labels,
 			Source:        &annotations.Source,
-			LastUpdated:   &lastUpdated,
+			LastUpdated:   lastUpdated,
 			IsSigned:      &isSigned,
 			Platform: &gql_generated.OsArch{
 				Os:   &imageConfig.OS,
@@ -890,7 +895,7 @@ func BuildImageInfo(repo string, tag string, manifestDigest godigest.Digest,
 				Licenses:      &annotations.Licenses,
 				Labels:        &annotations.Labels,
 				Source:        &annotations.Source,
-				LastUpdated:   &lastUpdated,
+				LastUpdated:   lastUpdated,
 				IsSigned:      &isSigned,
 				Platform: &gql_generated.OsArch{
 					Os:   &imageConfig.OS,
@@ -935,7 +940,7 @@ func BuildImageInfo(repo string, tag string, manifestDigest godigest.Digest,
 		Licenses:      &annotations.Licenses,
 		Labels:        &annotations.Labels,
 		Source:        &annotations.Source,
-		LastUpdated:   &lastUpdated,
+		LastUpdated:   lastUpdated,
 		IsSigned:      &isSigned,
 		Platform: &gql_generated.OsArch{
 			Os:   &imageConfig.OS,

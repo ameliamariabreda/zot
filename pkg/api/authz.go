@@ -222,8 +222,8 @@ func AuthzHandler(ctlr *Controller) mux.MiddlewareFunc {
 				return
 			}
 
-			if strings.Contains(request.RequestURI, constants.ExtSearchPrefix) {
-				next.ServeHTTP(response, request.WithContext(ctx)) //nolint:contextcheck
+			if strings.Contains(request.RequestURI, constants.V2ExtSearchPrefix) {
+				next.ServeHTTP(response, request.WithContext(ctx))
 
 				return
 			}

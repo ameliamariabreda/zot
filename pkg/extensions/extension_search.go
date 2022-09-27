@@ -63,7 +63,7 @@ func downloadTrivyDB(log log.Logger, updateInterval time.Duration) error {
 }
 
 func SetupSearchRoutes(config *config.Config, router *mux.Router, storeController storage.StoreController,
-	searchDB repodb.RepoDB, l log.Logger,
+	searchDB repodb.RepoDB, log log.Logger,
 ) {
 	log.Info().Msg("setting up search routes")
 
